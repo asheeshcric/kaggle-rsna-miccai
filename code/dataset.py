@@ -33,7 +33,7 @@ class RsnaDataset:
         )
 
         channels = []
-        for type in ("FLAIR", "T1w", "T1wCE", "T2w"):
+        for type in ("FLAIR", "T1w", "T1wCE"): # , "T2w"
             # glob.glob is equivalent to os.listdir() function
             dcm_paths = sorted(
                 glob.glob(os.path.join(patient_path, type, "*")),
