@@ -1,5 +1,11 @@
+# Ignore model checkpoints
+checkpoints/
+
 # Ignore data files
 data/
+
+# Ignore VSCode files
+.vscode/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
