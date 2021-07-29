@@ -17,6 +17,10 @@ def get_arguments():
     parser.add_argument("--batch_size", type=int, default=4)
     parser.add_argument("--img_shape", type=int, default=256)
     parser.add_argument("--validation_pct", type=float, default=0.2)
+    parser.add_argument("--input_channels", type=int, default=4)
+    parser.add_argument("--output_channels", type=int, default=64)
+    parser.add_argument("--lstm_hidden_size", type=int, default=128)
+    parser.add_argument("--num_classes", type=int, default=2)
     parser.add_argument(
         "--sequence_length",
         type=int,
