@@ -14,7 +14,7 @@ from sklearn.model_selection import train_test_split
 from dataset import RsnaDataset
 
 from utils import LossMeter, AccMeter, get_arguments
-from model import RsnaModel
+from model import RsnaCustomNet
 
 """
 python main.py --epochs=5 --batch_size=4 --validation_pct=0.2
@@ -188,9 +188,14 @@ if __name__ == "__main__":
     # First we work on the training data
     args.data_dir = "train"
     train_loader, validation_loader = get_train_val_loaders(args)
+    
+    # temporary testing
+    # data = next(iter(train_loader))
+    # x, y = data['X'], data['y']
+    # print(x.shape)
 
     # Initialize the model here...
-    model = RsnaModel()
+    model = RsnaCustomNet(args)
     model.to(args.device)
 
     # Select optimizer and loss function here...

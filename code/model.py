@@ -33,7 +33,7 @@ class RsnaCustomNet(nn.Module):
             nn.BatchNorm2d(args.output_channels * 2),
             nn.ReLU(inplace=True),
             nn.Conv2d(
-                args.output_channels,
+                args.output_channels * 2,
                 args.output_channels * 4,
                 kernel_size=3,
                 stride=1,
