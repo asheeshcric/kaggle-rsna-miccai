@@ -188,7 +188,7 @@ if __name__ == "__main__":
     # First we work on the training data
     args.data_dir = "train"
     train_loader, validation_loader = get_train_val_loaders(args)
-    
+
     # temporary testing
     # data = next(iter(train_loader))
     # x, y = data['X'], data['y']
@@ -196,7 +196,12 @@ if __name__ == "__main__":
 
     # Initialize the model here...
     model = RsnaCustomNet(args)
-    model.to(args.device)
+
+    # DataParallel Settings
+    args.num_gpus = torch.cuda.device_count()
+    print(f"Number of GPUs available: {args.num_gpus}")
+    if args.device.type == "cuda" and args.num_gpus > 1:
+        model = torch.nn.DataParallel(model, list(range(args.num_gpus)))
 
     # Select optimizer and loss function here...
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
