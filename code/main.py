@@ -22,7 +22,7 @@ python main.py --epochs=5 --batch_size=4 --validation_pct=0.2
 """
 
 
-def get_train_val_loaders(args):
+def get_train_val_loaders(args, transform=None):
     # Load and split train and validation data
     train_data = pd.read_csv(os.path.join(args.data_path, "train_labels.csv"))
 
@@ -34,6 +34,7 @@ def get_train_val_loaders(args):
         paths=df_train["BraTS21ID"].values,
         targets=df_train["MGMT_value"].values,
         args=args,
+        transform=transform,
     )
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
 
@@ -41,6 +42,7 @@ def get_train_val_loaders(args):
         paths=df_validation["BraTS21ID"].values,
         targets=df_validation["MGMT_value"].values,
         args=args,
+        transform=transform,
     )
     validation_loader = DataLoader(
         validation_dataset, batch_size=args.batch_size, shuffle=True
@@ -181,6 +183,7 @@ if __name__ == "__main__":
     args = get_arguments()
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     args.device = device
+    args.img_shape = (args.img_shape, args.img_shape)
 
     # First we work on the training data
     args.data_dir = "train"

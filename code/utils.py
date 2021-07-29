@@ -15,7 +15,14 @@ def get_arguments():
     )
     parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--batch_size", type=int, default=4)
+    parser.add_argument("--img_shape", type=int, default=256)
     parser.add_argument("--validation_pct", type=float, default=0.2)
+    parser.add_argument(
+        "--sequence_length",
+        type=int,
+        default=30,
+        help="Lenght of image sequence that you want for the model",
+    )
     # Add new parsers here...
 
     args = parser.parse_args()
