@@ -1,6 +1,7 @@
 import argparse
 import os
 import time
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
@@ -10,6 +11,7 @@ import torch.nn.functional as F
 from torch.utils.data.dataloader import DataLoader
 
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix
 
 from dataset import RsnaDataset
 
@@ -179,6 +181,77 @@ class Trainer:
         print(message.format(*args), end=end)
 
 
+def get_confusion_matrix(args, preds, actual):
+    preds = [int(k) for k in preds]
+    actual = [int(k) for k in actual]
+
+    cf = confusion_matrix(actual, preds, labels=list(range(args.num_classes)))
+    return cf
+
+
+def test(model, data_loader, args):
+    correct, total = 0, 0
+    preds, actual = [], []
+    model.eval()
+    with torch.no_grad():
+        for batch in data_loader:
+            if not batch:
+                continue
+            inputs, labels = batch[0].to(args.device), batch[1].to(args.device)
+            outputs = model(inputs)
+            _, class_pred = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (class_pred == labels).sum().item()
+            preds.extend(list(class_pred.to(dtype=torch.int64)))
+            actual.extend(list(labels.to(dtype=torch.int64)))
+
+    acc = 100 * (correct / total)
+    model.train()
+    return preds, actual, acc
+
+
+def train(model, train_loader, val_loader, args, optimizer, criterion):
+    # loss_function = torch.nn.CrossEntropyLoss(weight=args.class_weights)
+    # optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
+
+    # Star the training
+    print(f"Training...")
+    for epoch in range(args.epochs):
+        for batch in train_loader:
+            inputs, labels = batch[0].to(args.device), batch[1].to(args.device)
+            optimizer.zero_grad()
+
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            # Clip the gradients because I'm using LSTM layer in the model
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1)
+            optimizer.step()
+
+        if epoch % 2 != 0:
+            # Check train and val accuracy after every two epochs
+            print("Validating...")
+            _, _, train_acc = test(model, train_loader, args)
+            _, _, val_acc = test(model, val_loader, args)
+            print(
+                f"Epoch: {epoch+1} | Loss: {loss} | Train Acc: {train_acc} | Validation Acc: {val_acc}"
+            )
+        else:
+            print("Training epoch...")
+            print(f"Epoch: {epoch+1} | Loss: {loss}")
+
+        # Save checkpoint after every 10 epochs
+        if (epoch + 1) % 10 == 0:
+            current_time = datetime.now().strftime("%m_%d_%Y_%H_%M")
+            torch.save(
+                model.state_dict(),
+                f"{args.file_name}-{current_time}-lr-{args.learning_rate}-epochs-{epoch+1}-acc-{val_acc:.2f}.pth",
+            )
+
+    print("Training complete")
+    return model
+
+
 if __name__ == "__main__":
     args = get_arguments()
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -202,12 +275,22 @@ if __name__ == "__main__":
     print(f"Number of GPUs available: {args.num_gpus}")
     if args.device.type == "cuda" and args.num_gpus > 1:
         model = torch.nn.DataParallel(model, list(range(args.num_gpus)))
+    else:
+        model.to(args.device)
 
     # Select optimizer and loss function here...
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
     criterion = F.binary_cross_entropy_with_logits
 
     # Start training
-    trainer = Trainer(args, model, optimizer, criterion, LossMeter, AccMeter)
+    # trainer = Trainer(args, model, optimizer, criterion, LossMeter, AccMeter)
 
-    history = trainer.fit(train_loader, validation_loader, f"best_model_0.pth", 100)
+    # history = trainer.fit(train_loader, validation_loader, f"best_model_0.pth", 100)
+
+    # My method
+    model = train(model, train_loader, validation_loader, args, optimizer, criterion)
+
+    # Validate the model
+    preds, actual, acc = test(model, validation_loader)
+    print(f"Validation accuracy: {acc}")
+    print(get_confusion_matrix(args, preds, actual))

@@ -21,6 +21,8 @@ def get_arguments():
     parser.add_argument("--output_channels", type=int, default=64)
     parser.add_argument("--lstm_hidden_size", type=int, default=128)
     parser.add_argument("--num_classes", type=int, default=2)
+    parser.add_argument("--file_name", type=str, default="new_model")
+    parser.add_argument("--learning_rate", type=float, default=0.001)
     parser.add_argument(
         "--sequence_length",
         type=int,
