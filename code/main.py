@@ -268,15 +268,13 @@ if __name__ == "__main__":
     # print(x.shape)
 
     # Initialize the model here...
-    model = RsnaCustomNet(args)
+    model = RsnaCustomNet(args).to(args.device)
 
     # DataParallel Settings
     args.num_gpus = torch.cuda.device_count()
     print(f"Number of GPUs available: {args.num_gpus}")
     if args.device.type == "cuda" and args.num_gpus > 1:
         model = torch.nn.DataParallel(model, list(range(args.num_gpus)))
-    else:
-        model.to(args.device)
 
     # Select optimizer and loss function here...
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
