@@ -218,7 +218,7 @@ def train(model, train_loader, val_loader, args, optimizer, criterion):
     print(f"Training...")
     for epoch in range(args.epochs):
         for batch in train_loader:
-            inputs, labels = batch[0].to(args.device), batch[1].to(args.device)
+            inputs, labels = batch['X'].to(args.device), batch['y'].to(args.device)
             optimizer.zero_grad()
 
             outputs = model(inputs)
