@@ -40,16 +40,16 @@ def get_train_val_loaders(args, transform=None):
     )
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
 
-    validation_dataset = RsnaDataset(
+    val_dataset = RsnaDataset(
         paths=df_validation["BraTS21ID"].values,
         targets=df_validation["MGMT_value"].values,
         args=args,
         transform=transform,
     )
-    validation_loader = DataLoader(
-        validation_dataset, batch_size=args.batch_size, shuffle=True
+    val_loader = DataLoader(
+        val_dataset, batch_size=args.batch_size, shuffle=True
     )
-    return train_loader, validation_loader
+    return train_loader, val_loader
 
 
 class Trainer:
@@ -72,13 +72,13 @@ class Trainer:
             "patience": "\nValid score didn't improve last {} epochs.",
         }
 
-    def fit(self, train_loader, validation_loader, save_path, patience):
+    def fit(self, train_loader, val_loader, save_path, patience):
         for n_epoch in range(1, self.args.epochs + 1):
             self.info_message(f"EPOCH: {n_epoch}")
 
             train_loss, train_score, train_time = self.train_epoch(train_loader)
             validation_loss, validation_score, validation_time = self.valid_epoch(
-                validation_loader
+                val_loader
             )
 
             self.info_message(
@@ -218,7 +218,7 @@ def train(model, train_loader, val_loader, args, optimizer, criterion):
     print(f"Training...")
     for epoch in range(args.epochs):
         for batch in train_loader:
-            inputs, labels = batch['X'].to(args.device), batch['y'].to(args.device)
+            inputs, labels = batch["X"].to(args.device), batch["y"].to(args.device)
             optimizer.zero_grad()
 
             outputs = model(inputs)
@@ -258,9 +258,31 @@ if __name__ == "__main__":
     args.device = device
     args.img_shape = (args.img_shape, args.img_shape)
 
-    # First we work on the training data
-    args.data_dir = "train"
-    train_loader, validation_loader = get_train_val_loaders(args)
+    # Load and split train and validation data
+    train_data = pd.read_csv(os.path.join(args.data_path, "train_labels.csv"))
+    transform = None
+
+    df_train, df_validation = train_test_split(
+        train_data, test_size=args.validation_pct, stratify=train_data["MGMT_value"]
+    )
+
+    train_dataset = RsnaDataset(
+        paths=df_train["BraTS21ID"].values,
+        targets=df_train["MGMT_value"].values,
+        args=args,
+        transform=transform,
+    )
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+
+    val_dataset = RsnaDataset(
+        paths=df_validation["BraTS21ID"].values,
+        targets=df_validation["MGMT_value"].values,
+        args=args,
+        transform=transform,
+    )
+    val_loader = DataLoader(
+        val_dataset, batch_size=args.batch_size, shuffle=True
+    )
 
     # temporary testing
     # data = next(iter(train_loader))
@@ -283,12 +305,12 @@ if __name__ == "__main__":
     # Start training
     # trainer = Trainer(args, model, optimizer, criterion, LossMeter, AccMeter)
 
-    # history = trainer.fit(train_loader, validation_loader, f"best_model_0.pth", 100)
+    # history = trainer.fit(train_loader, val_loader, f"best_model_0.pth", 100)
 
     # My method
-    model = train(model, train_loader, validation_loader, args, optimizer, criterion)
+    model = train(model, train_loader, val_loader, args, optimizer, criterion)
 
     # Validate the model
-    preds, actual, acc = test(model, validation_loader)
+    preds, actual, acc = test(model, val_loader)
     print(f"Validation accuracy: {acc}")
     print(get_confusion_matrix(args, preds, actual))
