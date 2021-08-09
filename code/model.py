@@ -80,22 +80,22 @@ class RsnaCustomNet(nn.Module):
 
     def forward(self, x):
         batch_size, timesteps, c, h, w = x.size()
-        cnn_out = self.convs(x)
+        out = self.convs(x)
 
         # Prepare the output from CNN to pass through the LSTM layer
-        r_in = cnn_out.view(batch_size, timesteps, -1)
+        out = out.view(batch_size, timesteps, -1)
 
         # Flattening is required when we use DataParallel
         self.lstm.flatten_parameters()
 
         # Get output from the LSTM
-        r_out, (h_n, h_c) = self.lstm(r_in)
+        out, (h_n, h_c) = self.lstm(out)
 
         # Pass the output of the LSTM to FC layers
-        r_out = self.fc(r_out[:, -1, :])
+        out = self.fc(out[:, -1, :])
 
         # Apply softmax to the output and return it
-        return r_out
+        return out
 
 
 class RsnaEfficientNet(nn.Module):
