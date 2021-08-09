@@ -38,7 +38,8 @@ def get_train_val_loaders(args, transform=None):
         args=args,
         transform=transform,
     )
-    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+    train_loader = DataLoader(
+        train_dataset, batch_size=args.batch_size, shuffle=True)
 
     val_dataset = RsnaDataset(
         paths=df_validation["BraTS21ID"].values,
@@ -76,7 +77,8 @@ class Trainer:
         for n_epoch in range(1, self.args.epochs + 1):
             self.info_message(f"EPOCH: {n_epoch}")
 
-            train_loss, train_score, train_time = self.train_epoch(train_loader)
+            train_loss, train_score, train_time = self.train_epoch(
+                train_loader)
             validation_loss, validation_score, validation_time = self.valid_epoch(
                 val_loader
             )
@@ -138,7 +140,8 @@ class Trainer:
 
             _loss, _score = train_loss.avg, train_score.avg
             message = "Train Step {}/{}, train_loss: {:.5f}, train_score: {:.5f}"
-            self.info_message(message, step, len(train_loader), _loss, _score, end="\r")
+            self.info_message(message, step, len(
+                train_loader), _loss, _score, end="\r")
 
         return train_loss.avg, train_score.avg, int(time.time() - t)
 
@@ -161,7 +164,8 @@ class Trainer:
 
             _loss, _score = valid_loss.avg, valid_score.avg
             message = "Valid Step {}/{}, valid_loss: {:.5f}, valid_score: {:.5f}"
-            self.info_message(message, step, len(valid_loader), _loss, _score, end="\r")
+            self.info_message(message, step, len(
+                valid_loader), _loss, _score, end="\r")
 
         return valid_loss.avg, valid_score.avg, int(time.time() - t)
 
@@ -218,7 +222,8 @@ def train(model, train_loader, val_loader, args, optimizer, criterion):
     print(f"Training...")
     for epoch in range(args.epochs):
         for batch in train_loader:
-            inputs, labels = batch["X"].to(args.device), batch["y"].to(args.device)
+            inputs, labels = batch["X"].to(
+                args.device), batch["y"].to(args.device)
             optimizer.zero_grad()
 
             outputs = model(inputs)
@@ -254,8 +259,8 @@ def train(model, train_loader, val_loader, args, optimizer, criterion):
 
 if __name__ == "__main__":
     args = get_arguments()
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    args.device = device
+    args.device = torch.device(
+        "cuda:0" if torch.cuda.is_available() else "cpu")
     args.img_shape = (args.img_shape, args.img_shape)
 
     # Load and split train and validation data
@@ -272,7 +277,8 @@ if __name__ == "__main__":
         args=args,
         transform=transform,
     )
-    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
+    train_loader = DataLoader(
+        train_dataset, batch_size=args.batch_size, shuffle=True)
 
     val_dataset = RsnaDataset(
         paths=df_validation["BraTS21ID"].values,
